@@ -40,8 +40,8 @@ contract Marketplace is ReentrancyGuard{
         address indexed buyer
     );
 
-    constructor(uint _feePercent) {
-        feeAccount = payable(msg.sender);
+    constructor(uint _feePercent, address _feeAccount) {
+        feeAccount = payable(_feeAccount);
         feePercentage = _feePercent;
     }
 
@@ -56,6 +56,7 @@ contract Marketplace is ReentrancyGuard{
         payable(msg.sender),
         false);
 
+        
         emit Offered(
             itemCount,
             address(_nft),
@@ -63,18 +64,24 @@ contract Marketplace is ReentrancyGuard{
             _price,
             msg.sender
         );
+
+        itemCount ++;
+
     }
 
 
     function purchaseItem(uint _itemId) external payable nonReentrant {
         uint _totalPrice = getTotalPrice(_itemId);
         Item storage item = items[_itemId];
-        require(_itemId > 0 && _itemId <= itemCount, "No such item listed");
+        // Checks
+        require(_itemId >= 0 && _itemId <= itemCount, "No such item listed");
         require(msg.value >= _totalPrice, "Not enough funds to cover for price and market fee");
-        require(!item.sold, "Item not for sale anymore");
-        item.seller.transfer(item.price);
-        feeAccount.transfer(_totalPrice - item.price);
-        item.sold = true;
+        require(!item.sold, "Item not for sale anymore");  
+        // Effects
+        item.sold = true;      
+        // Interactions
+        item.seller.call{value: item.price}("");
+        feeAccount.call{value:_totalPrice - item.price }("");
         item.nftContract.transferFrom(address(this), msg.sender, item.tokenId);
         emit ItemPurchased(_itemId, address(item.nftContract), item.tokenId, item.price, item.seller, msg.sender);
     }

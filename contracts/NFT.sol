@@ -6,29 +6,32 @@ import "./Ownable.sol";
 
 contract NFT is ERC721URIStorage, Ownable {
 
-    struct CosmicNft {
-        string collection;
-        // We may add more props as intended
-    }
+    // struct CosmicNft {
+    //     string collection;
+    //     // We may add more props as intended
+    // }
 
-    mapping(string => uint[]) public collectionsMapping;
+    // mapping(string => uint[]) public collectionsMapping;
 
-    CosmicNft[] public cosmicNfts;
+    // CosmicNft[] public cosmicNfts;
+
+    uint public nftCount = 0;
 
     constructor (string memory _name, string memory _symbol) ERC721(_name,_symbol) {
         
     }
 
-    function mint(string memory _uri, string memory _collection) external onlyOwner {
-        cosmicNfts.push(CosmicNft(_collection));
-        collectionsMapping[_collection].push(cosmicNfts.length -1);
-        _safeMint(msg.sender, cosmicNfts.length -1);
-        _setTokenURI(cosmicNfts.length - 1, _uri);
+    function mint(string memory _uri) external onlyOwner {
+        // cosmicNfts.push(CosmicNft(_collection));
+        // collectionsMapping[_collection].push(cosmicNfts.length -1);
+        _safeMint(msg.sender, nftCount);
+        _setTokenURI(nftCount, _uri);
+        nftCount++;
     }
 
-    function getCollectionElements(string memory _collection) public view returns (uint[] memory _collectionElements) {
-        _collectionElements = collectionsMapping[_collection];
-    }
+    // function getCollectionElements(string memory _collection) public view returns (uint[] memory _collectionElements) {
+    //     _collectionElements = collectionsMapping[_collection];
+    // }
 
 
 }

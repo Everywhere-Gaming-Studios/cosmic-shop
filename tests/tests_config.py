@@ -35,7 +35,7 @@ def erc_721(account):
 
 @pytest.fixture
 def marketplace(account):
-    return NFT.deploy(1, {"from": account})
+    return Marketplace.deploy(1, accounts[1], {"from": account})
 
 
 
