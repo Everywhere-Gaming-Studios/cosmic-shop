@@ -80,8 +80,8 @@ contract Marketplace is ReentrancyGuard{
         // Effects
         item.sold = true;      
         // Interactions
-        item.seller.call{value: item.price}("");
-        feeAccount.call{value:_totalPrice - item.price }("");
+        payable(item.seller).call{value: item.price}("");
+        payable(feeAccount).call{value:_totalPrice - item.price }("");
         item.nftContract.transferFrom(address(this), msg.sender, item.tokenId);
         emit ItemPurchased(_itemId, address(item.nftContract), item.tokenId, item.price, item.seller, msg.sender);
     }
@@ -89,6 +89,15 @@ contract Marketplace is ReentrancyGuard{
 
     function getTotalPrice(uint _itemId) view public returns(uint) {
         return(items[_itemId].price*(100+feePercentage)/100);
+    }
+
+    function listItems() view public returns(Item[] memory) {
+        Item[] memory itemsToReturn = new Item[](itemCount);
+        for (uint i = 0; i < itemCount; i++) {
+            Item storage item = items[i];
+            itemsToReturn[i] = item;
+        }
+        return itemsToReturn;
     }
 
 

@@ -1,4 +1,4 @@
-from scripts.utils import deploy_nft
+from scripts.utils import deploy_nft, deploy_marketplace
 
 
 
@@ -10,3 +10,10 @@ def main():
         print("Successfully deployed")
     except:
         print("Error deploying")
+
+    print("Deploying Marketplace")
+    try:
+         deploy_marketplace()
+         print("Marketplace successfully deployed")
+    except:
+        print("Error deploying marketplace")

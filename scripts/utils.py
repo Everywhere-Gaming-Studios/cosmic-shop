@@ -25,3 +25,6 @@ def get_account():
 def deploy_nft():
     return NFT.deploy("Cosmic NFTs", "COSMICNFT", {"from": get_account()})
 
+
+def deploy_marketplace():
+    return Marketplace.deploy(1, get_account().address, {"from": get_account()})
