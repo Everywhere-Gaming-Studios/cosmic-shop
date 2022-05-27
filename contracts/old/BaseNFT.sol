@@ -2,18 +2,18 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "./Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract NFT is ERC721URIStorage, Ownable {
 
-    // struct CosmicNft {
-    //     string collection;
-    //     // We may add more props as intended
-    // }
+    struct CosmicNft {
+        string collection;
+        // We may add more props as intended
+    }
 
-    // mapping(string => uint[]) public collectionsMapping;
+    mapping(string => uint[]) public collectionsMapping;
 
-    // CosmicNft[] public cosmicNfts;
+    CosmicNft[] public cosmicNfts;
 
     uint public nftCount = 0;
 

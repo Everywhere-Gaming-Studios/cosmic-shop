@@ -4,8 +4,8 @@ from brownie import accounts, config, network
 
 
 
-def test_list_item(account, erc_721, marketplace):
-    erc_721.mint("test_uri", "rare",{"from": account})
+def test_make_item(account, erc_721, marketplace):
+    erc_721.mint("test_uri", {"from": account})
     nft_id = 0
     nft_price = 100
     erc_721.approve(marketplace.address, 0)
@@ -13,7 +13,7 @@ def test_list_item(account, erc_721, marketplace):
     assert(marketplace.items(0) == (0, erc_721.address, nft_id, nft_price, account.address, False))
 
 def test_purchase_item(account, investor, erc_721, marketplace):
-    erc_721.mint("test_uri", "rare",{"from": account})
+    erc_721.mint("test_uri",{"from": account})
     nft_id = 0
     nft_price = 100
     erc_721.approve(marketplace.address, 0)
@@ -23,3 +23,9 @@ def test_purchase_item(account, investor, erc_721, marketplace):
     marketplace.purchaseItem(0, {"from": investor, "value":price_to_pay})
     assert(account.balance() == initial_balance + nft_price)
     assert(erc_721.ownerOf(0) == investor.address)
+
+
+# Test reentrancy
+
+# Test List items
+
