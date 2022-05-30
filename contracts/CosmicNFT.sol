@@ -6,15 +6,17 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./NftTypes/Stage0NFT.sol";
 import "./NftTypes/CollectibleNFT.sol";
 import "./NftTypes/WithstandKairosNFT.sol";
+import "./NftTypes/utils/Rarity.sol";
 
 
-contract CosmicNFT is ERC721URIStorage, Ownable, Stage0NFT, CollectibleNFT, WithstandKairosNFT {
+contract CosmicNFT is ERC721URIStorage, HasRarity,Ownable, Stage0NFT, CollectibleNFT, WithstandKairosNFT {
 
     struct CosmicCollection {
         S0Metadata[] s0NFTs;
         WkMetadata[] wkNFTs;
         CMetadata[] cNFTs;
     }
+
   
     constructor (string memory _name, string memory _symbol) ERC721(_name,_symbol) { }
 
@@ -28,13 +30,13 @@ contract CosmicNFT is ERC721URIStorage, Ownable, Stage0NFT, CollectibleNFT, With
 
     function mintStage0Nft (string memory _uri, uint8 _class, uint8 _rarity) external onlyOwner {
         mint(_uri);
-        _setupS0NFT(_class, _rarity, cosmicNfts.length);
+        _setupS0NFT(_uri, _class, _rarity, cosmicNfts.length);
         cosmicNfts.push(cosmicNfts.length);
     }
 
     function mintWithstandKairosNFT (string memory _uri, uint8 _class, uint8 _rarity) external onlyOwner {
         mint(_uri);
-        _setupWkNFT(_class, _rarity, cosmicNfts.length);
+        _setupWkNFT(_uri, _class, _rarity, cosmicNfts.length);
         cosmicNfts.push(cosmicNfts.length);
     }
 
@@ -60,6 +62,10 @@ contract CosmicNFT is ERC721URIStorage, Ownable, Stage0NFT, CollectibleNFT, With
     function listAllNFTs () external view returns (CosmicCollection memory) {
         CosmicCollection memory _cosmicCollection = CosmicCollection(_listS0NFTs(), _listWkNFTs(), _listCNFTs());
         return _cosmicCollection;
+    }
+
+    function getMintedAmount () external view returns (uint _size) {
+        _size=cosmicNfts.length;
     }
 
 }

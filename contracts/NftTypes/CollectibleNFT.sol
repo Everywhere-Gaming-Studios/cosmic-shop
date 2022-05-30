@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./utils/Rarity.sol";
+import "./utils/CosmicMintable.sol";
 
 
-contract CollectibleNFT is HasRarity {
+contract CollectibleNFT is CosmicMintable {
 
     enum CClasses { PROFILE_PIC, SKIN, MUSIC }
 
@@ -25,6 +25,8 @@ contract CollectibleNFT is HasRarity {
         CClasses class = CClasses(_class); // This will automatically check whether this is legal or not
         Rarity rarity = Rarity(_rarity);
         cIndexMapping[id] = CMetadata(_uri, class, rarity, id); 
+        emit CosmicNftMinted("Collectible", rarity, _uri, id, msg.sender);
+
         cIds.push(id);
     }
 
@@ -32,7 +34,7 @@ contract CollectibleNFT is HasRarity {
     function _listCNFTs() internal view returns(CMetadata[] memory) {
             CMetadata[] memory cNFts = new CMetadata[](cIds.length);
             for (uint i = 0; i < cIds.length; i++) {
-                cNFts[i] = cIndexMapping[i];
+                cNFts[i] = cIndexMapping[cIds[i]];
             }
             return cNFts;
     }

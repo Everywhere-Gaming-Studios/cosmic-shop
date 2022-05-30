@@ -1,4 +1,4 @@
-from brownie import NFT, Marketplace, accounts, network, config
+from brownie import CosmicNFT, Marketplace, accounts, network, config
 from brownie.network import gas_price
 from brownie.network.gas.strategies import GasNowStrategy
 import pytest
@@ -8,8 +8,8 @@ import os
 
 LOCAL_BLOCKCHAIN_ENVIRONMENTS = ["development", "ganache-local"]
 
-NFT_NAME="NFT_TEST"
-NFT_SYMBOL="NFTT"
+NFT_NAME="Cosmic NFT"
+NFT_SYMBOL="COSMICNFT"
 
 
 @pytest.fixture
@@ -29,8 +29,8 @@ def investor():
 
 
 @pytest.fixture
-def erc_721(account):
-    return NFT.deploy(NFT_NAME, NFT_SYMBOL, {"from": account})
+def cosmic_nft(account):
+    return CosmicNFT.deploy(NFT_NAME, NFT_SYMBOL, {"from": account})
 
 
 @pytest.fixture

@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./utils/Rarity.sol";
+import "./utils/CosmicMintable.sol";
 
 
-abstract contract WithstandKairosNFT is HasRarity {
+abstract contract WithstandKairosNFT is CosmicMintable {
 
     enum WkClasses { HERO, COMPANION, TROOP, TOWER, BARRIER, POTIONS, FOOD }
 
     // Props important for further logic
     struct WkMetadata {
+        string uri;
         WkClasses class;
         Rarity rarity; // 0-4 (Normal- rare)
         uint index;
@@ -20,17 +21,18 @@ abstract contract WithstandKairosNFT is HasRarity {
 
     uint[] wkIds;
 
-    function _setupWkNFT(uint8 _class, uint8 _rarity, uint id) internal {
+    function _setupWkNFT(string memory _uri, uint8 _class, uint8 _rarity, uint id) internal {
         WkClasses class = WkClasses(_class); // This will automatically check whether this is legal or not
         Rarity rarity = Rarity(_rarity);
-        wkIndexMapping[id] = WkMetadata(class, rarity, id); 
+        wkIndexMapping[id] = WkMetadata(_uri, class, rarity, id); 
+        emit CosmicNftMinted("Withstand Kairos", rarity, _uri, id, msg.sender);
         wkIds.push(id);
     }
 
      function _listWkNFTs() internal view returns(WkMetadata[] memory) {
             WkMetadata[] memory wkNFts = new WkMetadata[](wkIds.length);
             for (uint i = 0; i < wkIds.length; i++) {
-                wkNFts[i] = wkIndexMapping[i];
+                wkNFts[i] = wkIndexMapping[wkIds[i]];
             }
             return wkNFts;
     }

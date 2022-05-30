@@ -2,15 +2,16 @@
 pragma solidity ^0.8.0;
 
 
-import "./utils/Rarity.sol";
+import "./utils/CosmicMintable.sol";
 
 
-contract Stage0NFT is HasRarity {
+contract Stage0NFT is CosmicMintable {
 
         enum S0Classes { AVATAR, WORKER, BUILDING, ITEMS, EQUIPMENT }
 
          // Props important for further logic
         struct S0Metadata {
+            string uri;
             S0Classes class;
             Rarity rarity; // 0-4 (Normal- rare)
             uint index;
@@ -22,10 +23,11 @@ contract Stage0NFT is HasRarity {
         uint[] public s0Ids;
 
 
-        function _setupS0NFT(uint8 _class, uint8 _rarity, uint id) internal {
+        function _setupS0NFT(string memory _uri, uint8 _class, uint8 _rarity, uint id) internal {
             S0Classes class = S0Classes(_class); // This will automatically check whether this is legal or not
             Rarity rarity = Rarity(_rarity);
-            s0IndexMapping[id] = S0Metadata(class, rarity, id); 
+            s0IndexMapping[id] = S0Metadata(_uri, class, rarity, id);
+            emit CosmicNftMinted("Stage0", rarity, _uri, id, msg.sender); 
             s0Ids.push(id);
         }
 
@@ -33,7 +35,7 @@ contract Stage0NFT is HasRarity {
         function _listS0NFTs() internal view returns(S0Metadata[] memory) {
             S0Metadata[] memory s0NFts = new S0Metadata[](s0Ids.length);
             for (uint i = 0; i < s0Ids.length; i++) {
-                s0NFts[i] = s0IndexMapping[i];
+                s0NFts[i] = s0IndexMapping[s0Ids[i]];
             }
             return s0NFts;
         }
