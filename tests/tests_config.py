@@ -27,6 +27,22 @@ def investor():
     else:
         return accounts.add(config["test_wallets"]["from_key_2"])
 
+@pytest.fixture
+def investor2():
+    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+        return accounts[2]
+    else:
+        return accounts.add(config["test_wallets"]["from_key_2"])
+
+
+
+@pytest.fixture
+def fee_collector():
+    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+        return accounts[3]
+    else:
+        return accounts.add(config["test_wallets"]["from_key_2"])
+
 
 @pytest.fixture
 def cosmic_nft(account):
@@ -34,8 +50,8 @@ def cosmic_nft(account):
 
 
 @pytest.fixture
-def marketplace(account):
-    return Marketplace.deploy(1, accounts[1], {"from": account})
+def marketplace(account, fee_collector):
+    return Marketplace.deploy(1, fee_collector, {"from": account})
 
 
 
