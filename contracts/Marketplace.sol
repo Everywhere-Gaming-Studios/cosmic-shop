@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
-
-contract Marketplace is ReentrancyGuard{
+contract Marketplace is ReentrancyGuard , KeeperCompatible{
 
     enum PurchaseType {HIGHEST_BID, BUYOUT}
 
@@ -29,11 +29,13 @@ contract Marketplace is ReentrancyGuard{
         address payable seller;
         Bid lastBid;
         bool sold;
+        uint auctonStartTimestamp;
     }
 
  
     mapping(uint => Item) public items;
 
+    uint[] public itemsForSale;
 
     event Listed(
         uint itemId,
@@ -84,7 +86,8 @@ contract Marketplace is ReentrancyGuard{
         _buyoutPrice,
         payable(msg.sender),
         Bid(address(0),0),
-        false);
+        false,
+        block.timestamp);
 
         emit Listed(
             itemCount,
@@ -97,6 +100,7 @@ contract Marketplace is ReentrancyGuard{
             block.timestamp
         );
 
+        itemsForSale.push(itemCount);
         itemCount ++;
 
     }
@@ -141,6 +145,15 @@ contract Marketplace is ReentrancyGuard{
 
     // Private utils
 
+    function _removeItemFromSalesArray(uint _itemId) private {
+        for (uint i = 0; i < itemsForSale.length; i++) {
+            if(itemsForSale[i] == _itemId) {
+                itemsForSale[i] = itemsForSale[itemsForSale.length -1];
+                itemsForSale.pop();
+            }
+        }
+    }
+
     function _refundLastBid(Item storage item) private returns(bool) {
         // Checks
         Bid memory previousBid = Bid(item.lastBid.bidder, item.lastBid.amount);        
@@ -155,6 +168,14 @@ contract Marketplace is ReentrancyGuard{
 
 
     function _closeAuction(Item storage item) private {
+
+        // In case no bid was made, return asset to user without any side effects
+        if(item.lastBid.amount == 0) {
+            _removeItemFromSalesArray(item.itemId);
+            item.nftContract.transferFrom(address(this),item.seller, item.tokenId);
+            return;
+        }
+
         // Update item status
         item.sold = true;
         
@@ -162,9 +183,12 @@ contract Marketplace is ReentrancyGuard{
         uint fee = getFee(item.itemId);
         payable(item.seller).call{value:item.lastBid.amount - fee}("");
         payable(feeAccount).call{value: fee }("");
-        item.nftContract.transferFrom(address(this), msg.sender, item.tokenId);
+        item.nftContract.transferFrom(address(this), item.lastBid.bidder, item.tokenId);
+
+        _removeItemFromSalesArray(item.itemId);
+
         emit ItemPurchased(
-            _itemId,
+            item.itemId,
             address(item.nftContract),
             item.tokenId,
             item.buyoutPrice,
@@ -189,6 +213,7 @@ contract Marketplace is ReentrancyGuard{
         payable(item.seller).call{value:item.buyoutPrice - fee}("");
         payable(feeAccount).call{value: fee }("");
         item.nftContract.transferFrom(address(this), msg.sender, item.tokenId);
+        _removeItemFromSalesArray(_itemId);
         emit ItemPurchased(
             _itemId,
             address(item.nftContract),
@@ -202,15 +227,13 @@ contract Marketplace is ReentrancyGuard{
     }
 
 
-
-
     // View functions
 
     function getFee(uint _itemId) view public returns(uint) {
         return(items[_itemId].buyoutPrice*feePercentage/100);
     }
 
-    function listItems() view public returns(Item[] memory) {
+    function listItems() view external returns(Item[] memory) {
         Item[] memory itemsToReturn = new Item[](itemCount);
         for (uint i = 0; i < itemCount; i++) {
             Item storage item = items[i];
@@ -219,8 +242,43 @@ contract Marketplace is ReentrancyGuard{
         return itemsToReturn;
     }
 
+    function listItemsForSale() view public returns(uint[] memory) {
+        return itemsForSale;
+    }
 
-    
+    // Keeper Functions
+
+    function checkUpkeep(bytes calldata /* checkData */) external view override returns (bool upkeepNeeded, bytes memory performData) {
+        uint[] memory scanArray = new uint[](itemsForSale.length);
+        uint auctionsToCloseCount = 0;
+        for(uint i=0; i < itemsForSale.length; i++) {
+            if(block.timestamp - items[itemsForSale[i]].auctonStartTimestamp >= items[itemsForSale[i]].auctionDuration) {
+                scanArray[auctionsToCloseCount] = itemsForSale[i];
+                auctionsToCloseCount ++;
+            }
+        }
+        uint[] memory auctionsToClose = new uint[](auctionsToCloseCount);
+        for(uint a=0; a< auctionsToCloseCount; a++) {
+            auctionsToClose[a] = scanArray[a];
+        } 
+        performData = abi.encode(auctionsToClose);
+        
+        upkeepNeeded = auctionsToClose.length > 0;
+        // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
+    }
+
+
+    function performUpkeep(bytes calldata  performData ) external override {
+        //We highly recommend revalidating the upkeep in the performUpkeep function
+        uint[] memory auctionsToClose = abi.decode(performData, (uint[]));
+        for (uint i = 0; i < auctionsToClose.length; i++) {
+            _closeAuction(items[auctionsToClose[i]]);
+          
+        }
+    }    
+
+
+
 
 
 }
