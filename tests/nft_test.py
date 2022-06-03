@@ -14,8 +14,8 @@ def test_mint(cosmic_nft, account):
     _uri = "test_uri"
     _class = 0
     _rarity = 1
-    cosmic_nft.mintStage0Nft(_uri, _class, _rarity,{"from": account})
-    
+    tx = cosmic_nft.mintStage0Nft(_uri, _class, _rarity,{"from": account})
+    tx.wait(1)
     assert(cosmic_nft.balanceOf(account.address) == initial_balance + 1)
 
 def test_get_colletion_elements(cosmic_nft, account):

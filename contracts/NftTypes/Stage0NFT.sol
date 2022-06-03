@@ -6,6 +6,7 @@ import "./utils/CosmicMintable.sol";
 
 
 contract Stage0NFT is CosmicMintable {
+ 
 
         enum S0Classes { AVATAR, WORKER, BUILDING, ITEMS, EQUIPMENT }
 
@@ -26,7 +27,7 @@ contract Stage0NFT is CosmicMintable {
         function _setupS0NFT(string memory _uri, uint8 _class, uint8 _rarity, uint id) internal {
             S0Classes class = S0Classes(_class); // This will automatically check whether this is legal or not
             Rarity rarity = Rarity(_rarity);
-            s0IndexMapping[id] = S0Metadata(_uri, class, rarity, id);
+            s0IndexMapping[id] = S0Metadata( _uri, class, rarity, id);
             emit CosmicNftMinted("Stage0", rarity, _uri, id, msg.sender); 
             s0Ids.push(id);
         }
