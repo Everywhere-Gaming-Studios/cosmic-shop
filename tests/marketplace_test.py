@@ -110,6 +110,22 @@ def test_bid_close(account, investor, investor2, fee_collector, cosmic_nft, mark
     pass
 
 
+def test_bid_funds_returned_after_buyout(account, investor, investor2, cosmic_nft, marketplace):
+    list_nft_on_marketplace(account, cosmic_nft, marketplace,0)
+    initial_balance = investor.balance()
+    price_to_pay = nft_buyout_price
+    new_investor_initial_balance = investor2.balance()
+
+
+    marketplace.makeBidOnItem(0, {"from": investor, "value": nft_bid_start_price})
+    assert(investor.balance() == initial_balance - nft_bid_start_price) # Assert investor balance
+    balance_after_bid = investor.balance()
+    assert(compare_listed_nfts(marketplace, 0, cosmic_nft.address, nft_id, nft_bid_start_price, duration_timestamp, nft_buyout_price,account.address, (investor.address,nft_bid_start_price), False))
+    
+    marketplace.buyoutItem(0, {"from": investor2, "value": price_to_pay})
+    assert(cosmic_nft.ownerOf(0) == investor2.address) # Owner after buyout is now investor
+    assert(investor2.balance() == new_investor_initial_balance - nft_buyout_price) # Investor final balance
+    assert(investor.balance() == balance_after_bid + nft_bid_start_price)
 
 
 # ------------------------------------ REVERTS -------------------------------------------

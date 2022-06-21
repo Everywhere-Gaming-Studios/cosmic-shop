@@ -1,4 +1,4 @@
-from brownie import NFT, Marketplace, accounts, network, config
+from brownie import CosmicNFT, Marketplace, accounts, network, config
 import os
 
 LOCAL_BLOCKCHAIN_ENVIRONMENTS = ["development", "ganache-local"]
@@ -23,8 +23,12 @@ def get_account():
 
 
 def deploy_nft():
-    return NFT.deploy("Cosmic NFTs", "COSMICNFT", {"from": get_account()})
+    return CosmicNFT.deploy("Cosmic NFTs", "COSMICNFT", {"from": get_account()})
 
 
 def deploy_marketplace():
     return Marketplace.deploy(1, get_account().address, {"from": get_account()})
+
+
+
+
