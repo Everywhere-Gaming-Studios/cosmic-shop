@@ -4,16 +4,26 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Marketplace is ReentrancyGuard, KeeperCompatible {
+contract Marketplace is ReentrancyGuard, KeeperCompatible, Ownable {
     enum PurchaseType {
         HIGHEST_BID,
         BUYOUT
     }
 
+    enum AuctionDuration {
+        ZERO_DAYS,
+        ONE_DAY,
+        TWO_DAYS,
+        THREE_DAYS
+    } 
+
     address payable public immutable feeAccount;
     uint256 public immutable feePercentage;
     uint256 itemCount;
+
+    address[] public whitelistedAddresses;
 
     struct Bid {
         address bidder;
@@ -42,7 +52,7 @@ contract Marketplace is ReentrancyGuard, KeeperCompatible {
         address indexed nft,
         uint256 tokenId,
         uint256 bidStartPrice,
-        uint256 auctionDuration,
+        AuctionDuration auctionDuration,
         uint256 buyoutPrice,
         address indexed seller,
         uint256 timestamp
@@ -76,10 +86,10 @@ contract Marketplace is ReentrancyGuard, KeeperCompatible {
         uint256 _tokenId,
         uint256 _bidStartPrice,
         uint256 _buyoutPrice,
-        uint256 _auctionDuration
-    ) external nonReentrant {
+        AuctionDuration _auctionDuration
+    ) external nonReentrant isWhitelisted(_nft) {
         require(_buyoutPrice > 0, "Price must be higher than zero");
-
+        
         _nft.transferFrom(msg.sender, address(this), _tokenId);
 
         items[itemCount] = Item(
@@ -87,7 +97,7 @@ contract Marketplace is ReentrancyGuard, KeeperCompatible {
             _nft,
             _tokenId,
             _bidStartPrice,
-            _auctionDuration,
+            uint256(_auctionDuration) * 24 * 60 * 60,
             _buyoutPrice,
             payable(msg.sender),
             Bid(address(0), 0),
@@ -153,6 +163,7 @@ contract Marketplace is ReentrancyGuard, KeeperCompatible {
 
     // Private utils
 
+  
     function _removeItemFromSalesArray(uint256 _itemId) private {
         for (uint256 i = 0; i < itemsForSale.length; i++) {
             if (itemsForSale[i] == _itemId) {
@@ -246,6 +257,20 @@ contract Marketplace is ReentrancyGuard, KeeperCompatible {
         );
     }
 
+
+
+    // Owner actions 
+
+    function whitelistNftCollection(address _nftAddress) external onlyOwner {
+        whitelistedAddresses.push(_nftAddress);
+    }
+
+    function removeWhitelistedAddress(uint _idx) external onlyOwner {
+        whitelistedAddresses[_idx] = whitelistedAddresses[whitelistedAddresses.length - 1];
+        whitelistedAddresses.pop();
+    }
+
+
     // View functions
 
     function getFee(uint256 _itemId) public view returns (uint256) {
@@ -263,6 +288,26 @@ contract Marketplace is ReentrancyGuard, KeeperCompatible {
 
     function listItemsForSale() public view returns (uint256[] memory) {
         return itemsForSale;
+    }
+
+
+    function getWhitelistedCollections() public view returns (address[] memory) {
+        return whitelistedAddresses;
+    }
+
+
+    modifier isWhitelisted(IERC721 _nftAddress) {
+        bool whitelisted = false;
+        for (uint i = 0; i < whitelistedAddresses.length; i++) {
+            if(whitelistedAddresses[i] == address(_nftAddress)) {
+                whitelisted = true;
+                break;
+            }
+        }
+        if(whitelisted == false) {
+            revert("Collection not whitelisted");
+        }
+        _;
     }
 
     // Keeper Functions
@@ -293,7 +338,6 @@ contract Marketplace is ReentrancyGuard, KeeperCompatible {
         performData = abi.encode(auctionsToClose);
 
         upkeepNeeded = auctionsToClose.length > 0;
-        // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
     }
 
     function performUpkeep(bytes calldata performData) external override {

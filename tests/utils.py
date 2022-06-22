@@ -8,14 +8,16 @@ _rarity = 3
 nft_id = 0
 nft_buyout_price = 100
 nft_bid_start_price = 20
-duration_timestamp = 60 * 60 
+duration_timestamp = 1 
 zero_address = '0x0000000000000000000000000000000000000000'
 
 # UTIL FUNCTIONS
-def list_nft_on_marketplace(account, cosmic_nft, marketplace, itemId):
+def list_nft_on_marketplace(account, cosmic_nft, marketplace, itemId, new_duration_timestamp = None):
     cosmic_nft.mintStage0Nft(_uri, _class, _rarity,{"from": account})
+    print("NFT minted")
     cosmic_nft.approve(marketplace.address, itemId)
-    marketplace.makeItem(cosmic_nft.address, itemId, nft_bid_start_price, nft_buyout_price, duration_timestamp, {"from": account})
+    print("Approved")
+    marketplace.makeItem(cosmic_nft.address, itemId, nft_bid_start_price, nft_buyout_price, new_duration_timestamp if new_duration_timestamp is not None else duration_timestamp, {"from": account})
 
 
 def list_nft_ready_to_close_auction(account, cosmic_nft, marketplace, itemId):
@@ -34,7 +36,7 @@ def compare_listed_nfts(marketplace, _itemId, _nft_address, _nft_id, _nft_bid_st
         return False
     elif(listed_nft[3] != _nft_bid_start_price):
         return False
-    elif(listed_nft[4] != _duration_timestamp):
+    elif(listed_nft[4] != _duration_timestamp * 24 * 60 * 60):
         return False
     elif(listed_nft[5] != _nft_buyout_price):
         return False

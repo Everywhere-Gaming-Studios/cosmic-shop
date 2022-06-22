@@ -1,5 +1,5 @@
 import brownie
-from tests_config import cosmic_nft, marketplace, account, investor, investor2, fee_collector, NFT_NAME, NFT_SYMBOL
+from tests_config import cosmic_nft, marketplace, account, investor, investor2, fee_collector, NFT_NAME, NFT_SYMBOL, other_nft
 from brownie import accounts, config, network
 from utils import list_nft_on_marketplace, compare_listed_nfts, nft_id, nft_buyout_price, duration_timestamp, nft_bid_start_price, zero_address
 
@@ -128,6 +128,10 @@ def test_bid_funds_returned_after_buyout(account, investor, investor2, cosmic_nf
     assert(investor.balance() == balance_after_bid + nft_bid_start_price)
 
 
+def test_list_nft_after_whitelisting(account, investor, investor2, marketplace, other_nft):
+    marketplace.whitelistNftCollection(other_nft.address, {"from": account})
+    list_nft_on_marketplace(account, other_nft, marketplace, 0)
+
 # ------------------------------------ REVERTS -------------------------------------------
 
 def test_revert_for_bid_from_seller(account, cosmic_nft, marketplace):
@@ -153,11 +157,20 @@ def test_revert_for_equal_bid(account, investor, investor2, cosmic_nft, marketpl
         marketplace.makeBidOnItem(0, {"from": investor2, "value": nft_bid_start_price})
     
 
+def test_revert_on_invalid_duration(account, investor, investor2, cosmic_nft, marketplace):
+    with brownie.reverts():
+        list_nft_on_marketplace(account, cosmic_nft, marketplace,0, 4)
+
+
+def test_revert_on_listing_non_whitelisted_collection(account, marketplace, other_nft):
+    print(marketplace.getWhitelistedCollections())
+    with brownie.reverts("Collection not whitelisted"):
+        print("Will list nft with address: ", other_nft.address)
+        list_nft_on_marketplace(account, other_nft, marketplace, 0)
 
 
 
 # Test error bid with lower than minimum
-
 
 # Test error bid already sold
 

@@ -1,5 +1,5 @@
 from scripts.nft_minter import mint_and_list_nfts
-from scripts.utils import deploy_nft, deploy_marketplace
+from scripts.utils import deploy_nft, deploy_marketplace, get_account
 
 
 
@@ -15,6 +15,7 @@ def main():
     print("Deploying Marketplace")
     try:
          marketplace = deploy_marketplace()
+         marketplace.whitelistNftCollection(nft_contract.address, {"from": get_account()})
          print("Marketplace successfully deployed")
     except:
         print("Error deploying marketplace")

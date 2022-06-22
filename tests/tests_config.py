@@ -50,8 +50,14 @@ def cosmic_nft(account):
 
 
 @pytest.fixture
-def marketplace(account, fee_collector):
-    return Marketplace.deploy(1, fee_collector, {"from": account})
+def other_nft(account):
+    return CosmicNFT.deploy("Other NFT", "OTHER", {"from": account})
 
 
+
+@pytest.fixture
+def marketplace(account, fee_collector, cosmic_nft):
+    mktplc = Marketplace.deploy(1, fee_collector, {"from": account})
+    mktplc.whitelistNftCollection(cosmic_nft.address, {"from": account})
+    return mktplc
 
